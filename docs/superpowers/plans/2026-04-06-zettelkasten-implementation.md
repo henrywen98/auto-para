@@ -1,5 +1,7 @@
 # Zettelkasten Plugin Implementation Plan
 
+> **SUPERSEDED**: This plan was executed on 2026-04-06. The batch model has since changed from parallel (10 files/batch) to sequential (5 files/batch). See `docs/superpowers/specs/2026-04-06-zettelkasten-design.md` for the current design.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a Claude Code plugin that auto-organizes an Obsidian vault using Zettelkasten methodology — atomize inbox content into permanent notes, build links, maintain MOC navigation.

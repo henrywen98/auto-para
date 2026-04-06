@@ -124,7 +124,8 @@ zettelkasten/                          # Repo root = plugin root
 │   └── zet-worker.md                  # Batch processing executor
 ├── references/
 │   ├── frontmatter-spec.md            # Frontmatter schema
-│   └── vault-structure.md             # Vault directory spec
+│   ├── vault-structure.md             # Vault directory spec
+│   └── atomization-rules.md           # Atomization decision rules
 ├── CLAUDE.md
 └── README.md
 ```
@@ -141,52 +142,28 @@ All operations use Claude Code built-in tools:
 ### 4.1 zet-ingest (skill)
 
 **Trigger**: `/zet ingest [target]`
-**Role**: Orchestrator — scans inbox, decides direct processing vs batch dispatch.
+**Role**: Pure orchestrator — scans inbox, batches files, dispatches zet-worker, updates MOCs, commits. No file processing logic.
 
 **Flow**:
 
 ```
 /zet ingest [target]
-    │
-    ├─ Scan 0_inbox/ (or target glob)
-    ├─ Count files
-    │
-    ├─ ≤10 files: process directly in current conversation
-    │   ├─ For each file:
-    │   │   ├─ Read full content
-    │   │   ├─ Determine source type (original / web-clip / import)
-    │   │   ├─ Atomize: split into independent concepts if multi-topic
-    │   ��   ├─ Rewrite in clear prose (preserve core info, improve structure)
-    │   │   ├─ Generate frontmatter (id, title, tags, summary, etc.)
-    │   │   ├─ Build links: Grep 1_zettel/ for related notes, add contextual [[]] links
-    │   │   ├─ Write to 1_zettel/YYYY-MM/<slug>.md
-    │   │   ├─ Move images to 4_assets/, update references to ![[image.png]]
-    │   │   └─ Delete source file from 0_inbox/
-    │   ├─ Update relevant MOCs in 2_maps/
-    │   └─ git commit
-    │
-    └─ >10 files: batch dispatch
-        ├─ Split into batches of ~10 files
-        ├��� Dispatch zet-worker agent per batch (shared working directory)
-        ├─ Workers: process files, skip MOC updates
-        ├─ Wait for all workers to complete
-        ├─ Consolidate: update MOCs in 2_maps/
-        ├─ Delete processed source files from 0_inbox/
-        └─ git commit
+    |
+    +-- Scan 0_inbox/ (or target glob)
+    +-- Count files
+    +-- Split into batches of ~5 files
+    |
+    +-- For each batch (sequentially):
+    |   +-- Dispatch zet-worker agent with batch file list
+    |   +-- Wait for worker to complete
+    |   +-- Delete processed source files from 0_inbox/
+    |   +-- Update MOCs in 2_maps/ for this batch
+    |   +-- git commit (per batch)
+    |
+    +-- Report summary
 ```
 
-**Atomization rules** (encoded in skill and agent):
-- One note = one independent concept/idea
-- Multi-topic with unrelated sections → split into separate notes
-- Coherent single-topic with multiple aspects → keep as one note
-- Each split note must be self-contained (understandable without the original)
-- If source has only one topic, do not split
-
-**Link building rules**:
-- Every new note must link to ≥1 existing note (connection forcing)
-- Links must have context explanation (not bare `[[]]`)
-- Prioritize cross-domain "surprise" connections over obvious same-topic links
-- Use Grep to search `1_zettel/` for semantic matches
+All file processing (atomize, rewrite, frontmatter, links, write, images) lives in zet-worker. The orchestrator never touches file content directly.
 
 **MOC maintenance rules**:
 - When a tag accumulates ≥3 notes, create or update a MOC in `2_maps/`
@@ -195,20 +172,20 @@ All operations use Claude Code built-in tools:
 
 ### 4.2 zet-worker (agent)
 
-**Role**: Batch executor, dispatched by zet-ingest for large inbox processing.
+**Role**: Sole file processor — all processing logic lives here. Dispatched by zet-ingest for every batch.
 **Model**: inherit
 **Color**: green
 **Tools**: Read, Write, Edit, Glob, Grep, Bash
 
 **Responsibilities**:
-1. Receive a batch of file paths
-2. For each file: read → atomize → rewrite → frontmatter → build links → write to 1_zettel/ → move images
-3. Skip MOC updates (orchestrator handles this after all workers finish)
-4. Report results: files processed, notes generated, links created
+1. Receive a batch of ~5 file paths
+2. For each file: read → atomize (per `references/atomization-rules.md`) → rewrite → frontmatter → build links → write to 1_zettel/ → handle images
+3. Link to notes from earlier batches (sequential processing enables this)
+4. Report results: files processed, notes created, links created, new note paths
 
 **Does NOT**:
-- Update MOCs (avoids write conflicts between workers)
-- Git commit (orchestrator does a single commit)
+- Update MOCs (orchestrator handles this after each batch)
+- Git commit (orchestrator commits after each batch)
 - Delete inbox files (orchestrator handles cleanup)
 
 ### 4.3 zet-query (skill)
@@ -273,7 +250,7 @@ All operations use Claude Code built-in tools:
 No dedicated migration skill. Users handle migration incrementally:
 
 1. User manually moves files into `0_inbox/` (in batches they're comfortable with)
-2. Run `/zet ingest` — skill auto-detects count, processes directly or dispatches agents
+2. Run `/zet ingest` — skill batches files and dispatches sequential zet-worker agents
 3. Repeat until vault is fully migrated
 
 This avoids the complexity of scan → plan → execute → validate pipeline from the previous design.

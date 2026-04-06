@@ -12,10 +12,10 @@ Zettelkasten is a Claude Code plugin that automatically organizes Obsidian vault
 
 No Python, no external dependencies. Three skills handle user commands; one agent handles batch processing:
 
-- `zet-ingest` (skill) — Orchestrator: scans inbox, processes files directly or dispatches zet-worker agents for large batches
+- `zet-ingest` (skill) — Pure orchestrator: scans inbox, batches files, dispatches zet-worker, updates MOCs, commits
 - `zet-query` (skill) — Knowledge base Q&A: navigates MOCs and notes to answer questions
 - `zet-lint` (skill) — Health check: orphan notes, broken links, frontmatter completeness, MOC coverage
-- `zet-worker` (agent) — Batch executor: processes ~10 inbox files per instance, dispatched by zet-ingest
+- `zet-worker` (agent) — Sole file processor: ~5 files per batch, all processing logic lives here
 
 Skills reference specs via `${CLAUDE_PLUGIN_ROOT}` — resolves to the plugin root at runtime.
 
@@ -29,10 +29,16 @@ Claude Code is launched inside the Obsidian vault. All paths are relative — no
 - **Connection forcing**: Every new note must link to ≥1 existing note via contextual wikilinks.
 - **MOC auto-maintenance**: When a tag accumulates ≥3 notes, a MOC is created/updated in 2_maps/.
 - **Inbox is ephemeral**: Processed files are deleted from 0_inbox/, not archived.
-- **Batch threshold**: ≤10 inbox files processed directly; >10 dispatched to parallel zet-worker agents.
+- **Sequential batching**: All files dispatched to zet-worker in batches of ~5, processed one batch at a time, each batch commits before next begins.
+- **Atomization rules**: Split decisions follow three tests (title/tag/independence) defined in `references/atomization-rules.md`.
+
+## Conventions
+
+- All code, comments, documentation, and commit messages in this repository use **English**.
 
 ## Notes
 
 - Install via Claude Code plugin marketplace: `github:henrywen98/zettelkasten`
 - Frontmatter schema in `references/frontmatter-spec.md`
 - Vault directory layout in `references/vault-structure.md`
+- Atomization rules in `references/atomization-rules.md`
