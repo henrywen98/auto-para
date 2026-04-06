@@ -17,6 +17,15 @@ Scan the knowledge base for structural problems: orphan notes, broken links, inc
 - Scan `2_maps/` dynamically with Glob — never hardcode MOC filenames
 - When writing helper scripts, use the **Write tool** to create a `.py` file, then run it with Bash. Do NOT use Bash heredoc or inline Python — the `!=` operator gets escaped to `\!=` in heredoc, causing SyntaxError.
 
+### Safe File Editing (auto-fix)
+
+Any generated script that **writes back** to note files MUST follow these rules:
+
+1. **Normalize smart quotes before YAML parsing.** Replace `\u201c`, `\u201d` → `"` and `\u2018`, `\u2019` → `'` in the raw frontmatter text before calling `yaml.safe_load()`. Smart/curly quotes are common in CJK content and break YAML parsing.
+2. **Preserve raw frontmatter on parse failure.** If `yaml.safe_load()` still fails after normalization, store the raw frontmatter string. When writing the file back, reconstruct `---\n{raw}\n---\n{body}` — never drop the frontmatter block.
+3. **Abort single-file fix on frontmatter loss.** Before writing any file, assert that the output contains a `---` fenced frontmatter block. If not, skip that file, log it as an error, and continue with the rest of the batch.
+4. **Use `re.MULTILINE` for `^` anchored patterns.** When searching multi-line strings with `re.findall(r'^- \[\[', ...)`, always pass `re.MULTILINE` — without it, `^` only matches start of string.
+
 ## Reference Specs
 
 - Frontmatter: ${CLAUDE_PLUGIN_ROOT}/references/frontmatter-spec.md

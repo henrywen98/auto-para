@@ -58,7 +58,8 @@ Follow atomization-rules.md. Apply the three-test decision flow (title, tag, ind
 
 ### 4. Generate Frontmatter
 
-Per frontmatter-spec.md:
+Per frontmatter-spec.md. **Before writing any field**, normalize all string values: replace smart/curly quotes with straight quotes per frontmatter-spec.md Smart Quote Normalization.
+
 - id: YYYYMMDDHHmm timestamp (use current time, increment minutes for splits from same source)
 - title: atomic title, one concept
 - created: from step 1

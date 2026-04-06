@@ -34,6 +34,19 @@ Rules:
 
 Tags are the key that maps notes to MOCs. Case-inconsistent tags cause MOC threshold miscounts and duplicate MOCs.
 
+### Smart Quote Normalization
+
+All frontmatter string values MUST use straight quotes, not smart/curly quotes. Normalize during processing:
+
+| Input | Unicode | Normalized |
+|-------|---------|-----------|
+| `\u201c` | U+201C left double curly | `"` |
+| `\u201d` | U+201D right double curly | `"` |
+| `\u2018` | U+2018 left single curly | `'` |
+| `\u2019` | U+2019 right single curly | `'` |
+
+Apply this normalization to the raw frontmatter text **before** YAML parsing. Smart quotes inside YAML string values cause `yaml.safe_load()` to fail, which can lead to data loss if the parsing error is not handled safely.
+
 ### Source Type Detection
 
 | Type | Signals |
