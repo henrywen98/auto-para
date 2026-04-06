@@ -4,67 +4,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AutoPARA is a Claude Code plugin that uses AI to automatically organize Obsidian vaults. Based on the PARA methodology (Projects/Areas/Resources/Archives), it archives inbox materials, compiles a wiki knowledge layer, and generates visualizations.
+AutoPARA is a Claude Code plugin that uses AI to automatically organize Obsidian vaults using the PARA methodology. Users drop files into inbox; AI archives them with frontmatter, compiles a wiki knowledge layer, and generates visualizations.
 
 ## Development Commands
 
-### Python Scripts (in `plugins/autopara/scripts/`)
-
 ```bash
-# Install dependencies (requires uv, Python >=3.12)
+# Install Python dependencies (requires uv, Python >=3.12)
 cd plugins/autopara/scripts && uv sync
 
-# Scan vault to generate manifest
-uv run scan.py <vault_path> [output_path]
-
-# Rewrite image/attachment links
-uv run relink.py <md_file> <old_prefix> <new_prefix>
-
-# Post-migration validation
-uv run validate.py <vault_path> <manifest_path>
+# Scripts — always run from plugins/autopara/scripts/
+uv run scan.py <vault_path> [output_path]        # Vault inventory → manifest.json
+uv run relink.py <md_file> <old_prefix> <new_prefix>  # Rewrite image links after file moves
+uv run validate.py <vault_path> <manifest_path>   # Post-migration validation
 ```
 
 No test suite or lint configuration exists.
 
 ## Architecture
 
-### Two-Layer Design: AI Workflows + Deterministic Scripts
+### Two-Layer Design
 
-**Skills (AI layer)** — SKILL.md files in `plugins/autopara/skills/` define AI-driven workflows:
-- `para-ingest` — Daily workhorse: process inbox files → archive + update wiki
-- `para-migrate` — One-time full vault migration, uses worktree + teammates for parallel execution
-- `para-query` — Knowledge base Q&A
-- `para-lint` — Health check (broken links, orphan pages, frontmatter completeness)
-- `para-viz` — Generate Marp/Mermaid/Matplotlib visualizations
-- `para-status` — Stats dashboard
+**AI layer** (skills in `plugins/autopara/skills/<name>/SKILL.md`) handles content analysis, frontmatter generation, and wiki compilation. **Deterministic layer** (Python scripts in `plugins/autopara/scripts/`) handles file scanning, link rewriting, and validation. Design principle: AI decides *what* to do with content; scripts handle *precise file operations*.
 
-**Scripts (deterministic layer)** — Python scripts in `plugins/autopara/scripts/` handle precise operations unsuitable for AI:
-- `scan.py` — Walks vault, extracts metadata from every .md file, outputs manifest.json
-- `relink.py` — Rewrites image paths after file moves (supports both `![](path)` and `![[path]]` Obsidian syntax)
-- `validate.py` — Compares manifest against actual vault state, checks for missing/empty files, broken links, frontmatter completeness
+Skills reference specs and scripts via `${CLAUDE_PLUGIN_ROOT}` — this variable resolves to `plugins/autopara/` at runtime. All script paths in SKILL.md files use this prefix (e.g., `${CLAUDE_PLUGIN_ROOT}/scripts/relink.py`).
 
-Design principle: AI handles content analysis and generation; scripts handle file scanning and validation.
+### Key Cross-Cutting Patterns
 
-### Reference Specs (`plugins/autopara/references/`)
+- **Frontmatter contracts**: Archive files require 7 fields, wiki files require 5, query outputs require 4. Specs in `references/frontmatter-spec.md` — skills and validate.py both enforce these.
+- **Vault ownership**: `0_inbox/` belongs to the user, `1_wiki/` belongs to AI, `3_archive/` is the bridge. AI never modifies inbox; users never edit wiki directly.
+- **Image handling**: All images centralized in `4_assets/`. After moving a file, always run `relink.py` to update paths. Supports both `![](path)` and `![[path]]` Obsidian syntax.
+- **Batch mode**: `para-ingest` has a `--batch` flag that skips user confirmation, wiki updates, and git commits — designed for teammate/parallel processing during `para-migrate`.
 
-- `frontmatter-spec.md` — Archive files require 7 fields (title/created/archived/tags/summary/concepts/source); wiki files require 5 (title/type/sources/related/last_compiled)
-- `vault-structure.md` — Target directory layout. Core principle: inbox belongs to the user, wiki belongs to AI, archive is the bridge
-
-### Plugin Structure
-
-```
-auto-para/                                       # Marketplace root
-├── .claude-plugin/marketplace.json              # Marketplace manifest
-└── plugins/autopara/                            # Plugin root
-    ├── .claude-plugin/plugin.json               # Plugin manifest
-    ├── skills/<name>/SKILL.md                   # Workflow definitions per skill
-    ├── scripts/                                 # Python deterministic scripts
-    └── references/                              # Frontmatter and vault structure specs
-```
-
-Install: search `henrywen98/auto-para` in Claude Code plugin marketplace.
-
-### para-migrate Parallel Execution Model
+### para-migrate Parallel Execution
 
 Migration is the most complex workflow, split into 4 phases:
 1. **Scan** (scan.py) → manifest.json
@@ -72,9 +43,12 @@ Migration is the most complex workflow, split into 4 phases:
 3. **Execute** (~40 files per teammate, isolated via git worktrees, merged after completion)
 4. **Validate** (validate.py) → validation-report.md
 
+### Plugin Structure
+
+Two-level nesting: marketplace root (`auto-para/`) contains the plugin (`plugins/autopara/`). Each level has its own `.claude-plugin/` manifest. Install via Claude Code plugin marketplace: search `henrywen98/auto-para`.
+
 ## Notes
 
-- `manifest.json` and `.venv/` in scripts/ are gitignored — do not commit
-- relink.py can be imported as a module (`from relink import relink_content`) or run standalone via CLI
-- validate.py checks archive files for 7 required frontmatter fields and wiki files for 5
-- scan.py word count is bilingual: Chinese counted per character, English per word
+- `manifest.json`, `validation-report.md`, `.venv/` are gitignored
+- `relink.py` can be imported as a module (`from relink import relink_content`) or run standalone
+- `scan.py` word count is bilingual: Chinese counted per character, English per word
