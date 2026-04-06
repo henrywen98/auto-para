@@ -7,7 +7,7 @@ description: >-
 
   <example>
   Context: The zet-ingest skill detected 3 files in 0_inbox/.
-  user: "/zet ingest"
+  user: "/zet-ingest"
   assistant: "Inbox has 3 files. Dispatching one batch to process."
   <commentary>
   Even small inboxes go through zet-worker. The orchestrator always delegates processing.
@@ -16,7 +16,7 @@ description: >-
 
   <example>
   Context: The zet-ingest skill is processing batch 2 of 4. Batch 1 already committed 7 notes to 1_zettel/.
-  user: "/zet ingest"
+  user: "/zet-ingest"
   assistant: "Batch 2/4: processing 5 files. Linking to 7 notes from batch 1."
   <commentary>
   Sequential processing means this batch can discover and link to notes created by batch 1.
