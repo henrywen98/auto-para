@@ -163,6 +163,10 @@ Batches are sequential — each commits before the next starts. This means later
 | **Sonnet** | Daily ingestion — fast, reliable, good link quality |
 | **Opus** | High-value content — best atomization judgment and cross-domain linking |
 
+## Inspiration
+
+Inspired by [Andrej Karpathy](https://karpathy.ai/)'s ideas on building a personal knowledge base with AI — letting machines handle the organizing so you can focus on thinking.
+
 ## License
 
 MIT
