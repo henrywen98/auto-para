@@ -13,13 +13,9 @@ AutoPARA combines both: PARA's structural principles to organize the vault, and 
 
 ## Installation
 
-```bash
-# Add marketplace
-/plugin marketplace add henrywen98/auto-para
-
-# Install plugin
-/plugin install autopara@auto-para
-```
+1. Open the plugin marketplace in Claude Code
+2. Search `henrywen98/auto-para`
+3. Install the `autopara` plugin
 
 ## Commands
 
@@ -76,10 +72,9 @@ Vault/
 
 ## Quick Start
 
-1. Add marketplace: `/plugin marketplace add henrywen98/auto-para`
-2. Install plugin: `/plugin install autopara@auto-para`
-3. Initialize your vault: `/para migrate` (one-time migration to AutoPARA structure)
-4. Daily use: drop materials into `0_inbox/`, run `/para ingest`
+1. Install: search `henrywen98/auto-para` in Claude Code plugin marketplace
+2. Initialize your vault: `/para migrate` (one-time migration to AutoPARA structure)
+3. Daily use: drop materials into `0_inbox/`, run `/para ingest`
 
 ## Tech Stack
 

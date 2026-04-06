@@ -62,7 +62,7 @@ auto-para/                                       # Marketplace root
     └── references/                              # Frontmatter and vault structure specs
 ```
 
-Install: `/plugin marketplace add henrywen98/auto-para`, then `/plugin install autopara@auto-para`.
+Install: search `henrywen98/auto-para` in Claude Code plugin marketplace.
 
 ### para-migrate Parallel Execution Model
 
