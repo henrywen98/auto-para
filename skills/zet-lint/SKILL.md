@@ -15,6 +15,7 @@ Scan the knowledge base for structural problems: orphan notes, broken links, inc
 
 - Frontmatter: ${CLAUDE_PLUGIN_ROOT}/references/frontmatter-spec.md
 - Vault structure: ${CLAUDE_PLUGIN_ROOT}/references/vault-structure.md
+- MOC rules: ${CLAUDE_PLUGIN_ROOT}/references/moc-rules.md
 
 ## Checks
 
@@ -60,8 +61,8 @@ Report notes not referenced by any MOC.
 
 ### 5. Tag-MOC Alignment
 
-Collect all tags from 1_zettel/ frontmatter. For tags with ≥3 notes:
-- Check if a corresponding MOC exists in 2_maps/
+Collect all tags from 1_zettel/ frontmatter. **Normalize tags to lowercase kebab-case before counting** (per frontmatter-spec.md Tag Normalization — `AI` and `ai` count as the same tag). For normalized tags with ≥3 notes:
+- Check if a corresponding MOC exists in 2_maps/ (match case-insensitively per moc-rules.md)
 - If not, suggest creating one
 
 **Category**: Suggestion
@@ -74,10 +75,38 @@ Find files in 1_zettel/ and 2_maps/ with no content (only frontmatter or complet
 
 ### 7. Stale MOC Counts
 
-For each MOC in 2_maps/, count actual inbound note links and compare to the `note_count` frontmatter field.
+For each MOC in 2_maps/, count the actual `- [[` entries under `## Notes` and compare to the `note_count` frontmatter field (per moc-rules.md — note_count must equal the count of `- [[` lines, not inbound links from other files).
 Report mismatches.
 
 **Category**: Warning
+
+### 8. Tag Case Consistency
+
+Collect all tags from 1_zettel/ frontmatter. Group tags by their lowercase form. Report any tag that appears in multiple case variants (e.g. `AI` in 15 notes vs `ai` in 15 notes).
+
+Also check for non-kebab-case tags: spaces, underscores, slashes, uppercase letters. Report any tag that violates the lowercase-kebab-case rule per frontmatter-spec.md Tag Normalization.
+
+**Category**: Warning (case variants exist), Error (if variants merged would reach ≥3 notes but no MOC exists)
+
+### 9. Broken Image References
+
+Scan all .md files in 1_zettel/ for image references matching:
+- `![[filename.png]]` (Obsidian wikilink, including `![[Pasted image ...]]`)
+- `![alt](path)` (standard markdown)
+
+For each referenced image, verify the file exists in `4_assets/`. Report missing images.
+
+**Category**: Error
+
+### 10. Near-Duplicate Notes
+
+Scan all notes in 1_zettel/. Flag potential duplicates by checking:
+- Notes whose titles are exactly identical
+- Notes where one title is a substring of another
+
+For each pair of suspected duplicates, report both file paths and their titles for user review.
+
+**Category**: Suggestion
 
 ## Output
 
@@ -106,8 +135,10 @@ Generate 3_output/lint-report-YYYY-MM-DD.md:
 ## Auto-Fix
 
 After presenting the report, offer to auto-fix:
-- Create missing MOCs for tags with ≥3 notes
-- Update stale MOC note_counts
+- **Tag normalization** (fixes Check 8): batch-rewrite all notes' frontmatter tags to lowercase-kebab-case per frontmatter-spec.md. Show preview before applying (e.g. "Will normalize `AI` → `ai` in 15 notes").
+- **MOC filename normalization** (fixes Check 8): rename `2_maps/` files to lowercase kebab-case (e.g. `AI.md` → `ai.md`). On macOS APFS (case-insensitive), use two-step rename: `git mv AI.md tmp.md && git mv tmp.md ai.md`. Do NOT modify wikilink text content — Obsidian wikilinks are case-insensitive.
+- **Create missing MOCs** (fixes Check 5): for normalized tags with ≥3 notes, create MOC per moc-rules.md
+- **Update stale MOC note_counts** (fixes Check 7): recount from actual `- [[` entries per moc-rules.md, also append missing note entries and update Related Maps cross-links
 - Add missing `## Links` sections (with placeholder for user to fill)
 
 Ask user for confirmation before applying fixes. If fixes are applied, commit:

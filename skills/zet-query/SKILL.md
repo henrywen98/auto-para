@@ -21,7 +21,7 @@ Answer questions by navigating the Zettelkasten through MOCs and note links. Thi
 
 ### 1. Read MOC Index
 
-Read all MOC files in 2_maps/ to build a topic overview. Identify which MOCs are relevant to the question based on titles and content.
+Use Glob to list all MOC filenames in 2_maps/. Filter for MOCs whose filenames or titles are relevant to the question keywords, then read only those MOC files. This avoids reading all MOCs when there are many.
 
 If 2_maps/ is empty, skip to step 2 and rely entirely on Grep.
 
@@ -30,6 +30,7 @@ If 2_maps/ is empty, skip to step 2 and rely entirely on Grep.
 Use multiple strategies to find relevant content:
 
 - **MOC navigation**: Follow links from relevant MOCs to 1_zettel/ notes
+- **Related Maps traversal**: Check the `## Related Maps` section of relevant MOCs to discover adjacent topic MOCs and their notes
 - **Keyword search**: Use Grep to search 1_zettel/ for question keywords and related terms
 - **Link traversal**: When reading a relevant note, follow its `## Links` section to discover connected notes
 

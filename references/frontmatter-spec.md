@@ -12,6 +12,28 @@
 | tags | string[] | yes | Tag list |
 | summary | string | yes | One-line summary of the note's core idea |
 
+### Tag Normalization
+
+All tags MUST be lowercase kebab-case. Normalize during processing:
+
+| Input | Normalized |
+|-------|-----------|
+| `AI` | `ai` |
+| `LLM` | `llm` |
+| `RLHF` | `rlhf` |
+| `Machine Learning` | `machine-learning` |
+| `product_management` | `product-management` |
+| `CI/CD` | `ci-cd` |
+
+Rules:
+1. Lowercase everything
+2. Replace spaces and underscores with hyphens
+3. Replace slashes with hyphens
+4. Collapse consecutive hyphens
+5. Strip leading/trailing hyphens
+
+Tags are the key that maps notes to MOCs. Case-inconsistent tags cause MOC threshold miscounts and duplicate MOCs.
+
 ### Source Type Detection
 
 | Type | Signals |

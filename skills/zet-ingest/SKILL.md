@@ -6,11 +6,7 @@ description: >-
   "clean up inbox", "handle new materials", "run zettelkasten", or has new files in 0_inbox/ to process.
   Orchestrates Zettelkasten ingestion: scans inbox, dispatches zet-worker agents in sequential
   batches, updates MOCs, and commits. The most frequently used daily command.
-user-invocable: true
-arguments:
-  - name: target
-    description: "File path or glob pattern, e.g. 0_inbox/*.md or a specific filename. Omit to process all .md files in 0_inbox/"
-    required: false
+  Accepts optional target argument: file path or glob pattern (e.g. 0_inbox/*.md). Omit to process all .md files in 0_inbox/.
 ---
 
 # Zettelkasten Ingest — Orchestrator
@@ -34,7 +30,7 @@ Split all files into batches of 10 (last batch may be smaller). Process batches 
 
 1. Dispatch a zet-worker agent with the batch file list as prompt input
 2. Wait for the worker to complete and collect its output (files processed, notes created, note paths)
-3. Delete processed source files from 0_inbox/
+3. Delete processed source files from 0_inbox/ — always double-quote paths (`rm -- "<path>"`), use `--` to prevent `-` filenames from being parsed as flags. If `rm` fails for a file, log the failure and continue with remaining files — do not abort the batch.
 4. Update MOCs for notes created in this batch (Section 3)
 5. Commit this batch (Section 4)
 6. Report batch progress: "Batch N/M complete: processed X files, created Y notes"
@@ -43,20 +39,32 @@ Split all files into batches of 10 (last batch may be smaller). Process batches 
 
 ### 3. Update MOCs
 
-Scan newly created notes from the current batch. For each tag that appears in ≥3 total notes across 1_zettel/:
+Follow ${CLAUDE_PLUGIN_ROOT}/references/moc-rules.md for all MOC operations.
 
-- If a MOC exists in 2_maps/ for that topic → read it, append new entries with one-line descriptions, update note_count and last_updated
-- If no MOC exists → create one in 2_maps/<topic>.md with proper frontmatter
-- Add "Related Maps" links between MOCs that share notes
+**3a. Collect tags from the entire vault (not just current batch)**
 
-MOC frontmatter follows ${CLAUDE_PLUGIN_ROOT}/references/frontmatter-spec.md (type: map, note_count, last_updated).
+Use Grep to search all `1_zettel/` files for `tags:` lines in one pass — do NOT read each file's frontmatter individually. Normalize all tags to lowercase kebab-case per frontmatter-spec.md, then count how many notes use each normalized tag.
+
+**3b. Create or update MOCs**
+
+For each normalized tag with ≥3 notes, follow moc-rules.md to create or update the MOC. Key rules:
+- Match existing MOCs case-insensitively (Glob `2_maps/*.md`, lowercase filename comparison)
+- When updating, append missing note entries and **recount note_count from actual `- [[` lines** (never increment)
+- When creating, use normalized tag as filename (e.g. `2_maps/ai.md`)
+
+**3c. Update Related Maps cross-links**
+
+After all MOCs are updated, scan for MOCs that share notes and add missing cross-links per moc-rules.md.
 
 ### 4. Commit
 
 ```bash
 git add 1_zettel/ 2_maps/ 4_assets/
+git add -u 0_inbox/
 git commit -m "zet: ingest N files, created M notes (batch X/Y)"
 ```
+
+The `git add -u 0_inbox/` stages deletions of processed inbox files so git tracks the cleanup.
 
 For single-batch runs, omit batch numbering:
 

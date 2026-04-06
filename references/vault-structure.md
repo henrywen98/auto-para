@@ -38,6 +38,8 @@ Vault/  (= current working directory)
 
 ## MOC Rules
 
+Detailed MOC management rules: see moc-rules.md
+
 - When a tag accumulates ≥3 notes across 1_zettel/, create or update a MOC in 2_maps/
 - Each MOC entry includes a one-line description
 - MOCs can link to other MOCs (related maps section)

@@ -64,7 +64,7 @@ Per frontmatter-spec.md:
 - created: from step 1
 - processed: today's date
 - source: from step 1
-- tags: relevant tags
+- tags: relevant tags — MUST be lowercase kebab-case per frontmatter-spec.md Tag Normalization (e.g. `AI` → `ai`, `Machine Learning` → `machine-learning`, `CI/CD` → `ci-cd`). Normalize all tags before writing.
 - summary: one-line summary
 
 ### 5. Build Links
@@ -85,16 +85,28 @@ Slug format: kebab-case derived from title, max 60 characters. Transliterate non
 
 ### 7. Handle Images
 
-If the file references images, move them to 4_assets/ and update references to `![[filename.png]]` wikilink format. Skip if image already exists in 4_assets/. Support both `![](path)` and `![[path]]` input formats.
+Search the note content for ALL image references using these patterns:
+1. `![[filename.png]]` — Obsidian wikilink (including `![[Pasted image YYYYMMDDHHMMSS.png]]`)
+2. `![alt](path/to/image.png)` — standard markdown
+3. `![[path/to/image.png]]` — wikilink with subdirectory path
+
+For each referenced image:
+1. Determine source path: check the original inbox file's directory first, then `0_inbox/`
+2. If found, move to `4_assets/` using Bash with quoted path: `mv -- "<source>" "4_assets/"` (quotes handle spaces, emoji, CJK characters)
+3. If NOT found at expected path, use Glob to search `0_inbox/` and its subdirectories: `0_inbox/**/<filename>`
+4. Update the reference in the note to `![[filename.png]]` (filename only, no subdirectory — Obsidian resolves wikilinks vault-wide)
+5. If the image cannot be found anywhere, keep the reference as-is and add: `<!-- WARNING: image not found: filename.png -->`
+6. Skip if image already exists in `4_assets/`
 
 ## Scope Boundary
 
 This worker handles **only** the file processing pipeline above.
 
-**Does NOT:**
-- Update MOCs in 2_maps/ (the orchestrator handles this after each batch)
-- Run git commit (the orchestrator commits after each batch)
-- Delete source files from 0_inbox/ (the orchestrator handles cleanup)
+**MUST NOT (hard boundaries):**
+- **Delete source files from 0_inbox/** — NEVER run `rm` or delete any file in `0_inbox/`. The orchestrator handles all inbox cleanup after confirming worker success. Deleting from the worker causes data loss if the batch is interrupted.
+- **Modify or delete existing notes in 1_zettel/** — only write NEW files
+- **Modify or delete MOC files in 2_maps/** — the orchestrator handles MOC updates after each batch with full vault context
+- **Run git commit** — the orchestrator commits after each batch
 
 ## Output
 
