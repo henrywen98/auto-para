@@ -5,7 +5,6 @@ description: >-
   "vault health", "any broken links", "check frontmatter", "find orphan notes",
   "what's wrong with the vault", "knowledge base health", or wants a structural
   health check of their Zettelkasten.
-user-invocable: true
 ---
 
 # Zettelkasten Lint — Health Check

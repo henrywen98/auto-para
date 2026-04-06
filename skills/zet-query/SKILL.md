@@ -5,14 +5,7 @@ description: >-
   "zet query", "find in my notes", "what did I write about", "search my notes",
   "find notes about", "what do I know about", or wants to ask questions against their
   Zettelkasten knowledge base. Supports quick (MOC + index only) and deep (reads full notes) modes.
-user-invocable: true
-arguments:
-  - name: question
-    description: "The question to query against the knowledge base"
-    required: true
-  - name: depth
-    description: "Query depth: quick (MOC + grep only) | deep (reads full notes). Default: deep"
-    required: false
+  Usage: /zet-query <question> [depth]. Depth: quick (MOC + grep only) | deep (reads full notes, default).
 ---
 
 # Zettelkasten Query — Knowledge Base Q&A

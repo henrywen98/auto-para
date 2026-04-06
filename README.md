@@ -7,10 +7,10 @@ AI-powered Obsidian vault organizer — drop materials into inbox, AI atomizes i
 ## How It Works
 
 1. Drop files into `0_inbox/` — notes, web clips, imports, anything
-2. Run `/zet ingest` — AI reads, atomizes, rewrites, links, and organizes
+2. Run `/zet-ingest` — AI reads, atomizes, rewrites, links, and organizes
 3. Browse `1_zettel/` for your permanent notes, `2_maps/` for topic navigation
-4. Run `/zet query <question>` to search and synthesize from your knowledge base
-5. Run `/zet lint` to check vault health
+4. Run `/zet-query <question>` to search and synthesize from your knowledge base
+5. Run `/zet-lint` to check vault health
 
 ## Vault Structure
 
@@ -27,9 +27,9 @@ Vault/
 
 | Command | Description |
 |---------|-------------|
-| `/zet ingest [target]` | Process inbox files into Zettelkasten notes |
-| `/zet query <question>` | Ask questions against your knowledge base |
-| `/zet lint` | Health check: orphans, broken links, frontmatter |
+| `/zet-ingest [target]` | Process inbox files into Zettelkasten notes |
+| `/zet-query <question>` | Ask questions against your knowledge base |
+| `/zet-lint` | Health check: orphans, broken links, frontmatter |
 
 ## Installation
 

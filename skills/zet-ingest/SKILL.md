@@ -6,11 +6,7 @@ description: >-
   "archive inbox files", "handle new materials", or has new files in 0_inbox/ to process.
   Orchestrates Zettelkasten ingestion: atomizes inbox content into permanent notes,
   builds wikilinks, and maintains MOC navigation. The most frequently used daily command.
-user-invocable: true
-arguments:
-  - name: target
-    description: "File path or glob pattern, e.g. 0_inbox/*.md or a specific filename. Omit to process all .md files in 0_inbox/"
-    required: false
+  Accepts an optional target argument (file path or glob pattern, e.g. 0_inbox/*.md). Omit to process all .md files in 0_inbox/.
 ---
 
 # Zettelkasten Ingest — Process Inbox
